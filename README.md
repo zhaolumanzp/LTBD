@@ -9,7 +9,6 @@ Official implementation of **Learnable Trust-Boundary Delimiters (LTBD)** for pr
 ```bash
 git clone https://github.com/zhaolumanzp/LTBD.git
 cd LTBD
-
 uv venv ltbd --python 3.13
 source ltbd/bin/activate
 
