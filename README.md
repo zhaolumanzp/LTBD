@@ -7,7 +7,7 @@ Official implementation of **Learnable Trust-Boundary Delimiters (LTBD)** for pr
 * Install environment dependencies via [uv](https://docs.astral.sh/uv/):
 
 ```bash
-git clone https://github.com/<your-account>/LTBD.git
+git clone https://github.com/zhaolumanzp/LTBD.git
 cd LTBD
 
 uv venv ltbd --python 3.13
