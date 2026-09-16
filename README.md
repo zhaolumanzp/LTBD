@@ -185,40 +185,6 @@ python test.py \
     -m /path/to/LTBD_model
 ```
 
-### Prompt Format
-
-For LTBD evaluation, use:
-
-- `"role": "system"` for the trusted instruction;
-- `"role": "user"` for the untrusted data.
-
-Meta_SecAlign originally uses `"role": "user"` for the trusted instruction and `"role": "input"` for the untrusted data. Please modify the corresponding prompt construction in [utils.py](https://github.com/facebookresearch/Meta_SecAlign/blob/main/utils.py#L250).
-
-Enable LTBD delimiters when calling `tokenizer.apply_chat_template`:
-
-```python
-tokenizer.apply_chat_template(
-    messages,
-    tokenize=False,
-    add_generation_prompt=True,
-    add_delimiter_tokens=True,
-)
-```
-
-The resulting input is:
-
-```text
-[system]
-<INST_BEGIN>
-trusted instruction
-<INST_END>
-
-[user]
-<DATA_BEGIN>
-untrusted data
-<DATA_END>
-```
-
 ---
 
 ## 📝 Citation
