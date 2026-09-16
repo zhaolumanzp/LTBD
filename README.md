@@ -91,7 +91,7 @@ python self_label.py \
     --output data/self_labeled.jsonl \
     --batch_size 192 \
     --max_samples 51760 \
-    --seed 0
+    --seed "$SEED"
 ```
 
 The generated responses are subsequently used as the desired outputs during defense training.
@@ -106,7 +106,7 @@ python train_defensive_tokens.py \
     --export_dprime data/dprime_chosen.jsonl \
     --max_length 1024 \
     --max_samples 51760 \
-    --seed 0
+    --seed "$SEED"
 ```
 
 The constructed dataset consists of clean samples and prompt鈥慽njected variants, namely `ignore`, `completion`, and `delimiter_spoof`. The three injected variants are sampled with weights of 1.5, 2.0, and 1.0, respectively
@@ -122,7 +122,7 @@ python gen_rejected.py \
     --output data/pref_dprime.jsonl \
     --max_new_tokens 1024 \
     --temperature 0.8 \
-    --seed 0 \
+    --seed "$SEED" \
     --batch_size 96
 ```
 
@@ -151,7 +151,7 @@ python train_defensive_tokens.py \
     --max_length 1024 \
     --batch_size 1 \
     --grad_accum 16 \
-    --seed 0
+    --seed "$SEED"
 ```
 
 If ```text self_labeled.jsonl, dprime_chosen.jsonl, pref_dprime.jsonl``` have already been generated, Steps 1–3 can be skipped and LTBD can be trained directly.
