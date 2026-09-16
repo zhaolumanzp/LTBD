@@ -221,43 +221,15 @@ untrusted data
 
 ---
 
-## 📁 Repository Structure
-
-```text
-LTBD/
-├── assets/
-│   ├── framework.png
-│   └── training.png
-├── data_sources.py
-├── gen_rejected.py
-├── injections.py
-├── prompting.py
-├── requirements.txt
-├── self_label.py
-├── train_defensive_tokens.py
-└── README.md
-```
-
-The main files are:
-
-- `data_sources.py`: load the Cleaned Alpaca training data.
-- `self_label.py`: generate self-labeled reference responses.
-- `injections.py`: construct prompt injection variants.
-- `gen_rejected.py`: generate rejected responses for preference training.
-- `prompting.py`: register LTBD tokens and construct delimiter-aware prompts.
-- `train_defensive_tokens.py`: construct \(D'\) and train the LTBD embeddings.
-
----
-
 ## 📝 Citation
 
 If you find this repository useful, please consider citing our paper:
 
 ```bibtex
 @inproceedings{ltbd2027,
-  title     = {Learnable Trust-Boundary Delimiters for Prompt Injection Defense},
+  title     = {A Lightweight Prompt Injection Defense with Learnable Trust-Boundary Delimiters},
   author    = {Anonymous},
-  booktitle = {ICASSP},
+  booktitle = {},
   year      = {2027}
 }
 ```
