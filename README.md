@@ -1,27 +1,109 @@
-# LTBD
+# LTBD: Learnable Trust-Boundary Delimiters for Prompt Injection Defense
 
-Official implementation of **Learnable Trust-Boundary Delimiters (LTBD)** for prompt injection defense.
+<p align="center">
+  <b>Official implementation of Learnable Trust-Boundary Delimiters (LTBD) for Prompt Injection Defense</b>
+</p>
 
-## Setup
+<p align="center">
+  <a href="#">Paper</a> |
+  <a href="https://github.com/zhaolumanzp/LTBD">Code</a>
+</p>
 
-* Install environment dependencies via [uv](https://docs.astral.sh/uv/):
+## 🔥 Overview
+
+<p align="center">
+  <img src="assets/framework.png" width="95%">
+</p>
+
+<p align="center">
+  <b>Figure 1.</b> Overview of Learnable Trust-Boundary Delimiters (LTBD).
+</p>
+
+Large language model (LLM) applications often combine **trusted instructions** with **untrusted external data**, such as webpages, documents, emails, and tool outputs. Prompt injection attacks exploit this setting by inserting malicious instructions into the untrusted data, causing the model to deviate from the intended task.
+
+We propose **Learnable Trust-Boundary Delimiters (LTBD)**, a lightweight defense that explicitly separates trusted instructions from untrusted data using four learnable special tokens:
+
+```text
+<INST_BEGIN>
+<INST_END>
+<DATA_BEGIN>
+<DATA_END>
+```
+
+Given a trusted instruction \(I\) and untrusted data \(D\), LTBD constructs the model input as:
+
+```text
+[system]
+<INST_BEGIN> I <INST_END>
+
+[user]
+<DATA_BEGIN> D <DATA_END>
+```
+
+Unlike fixed textual delimiters, the four boundary tokens are **learnable**. During defense training, all parameters of the underlying LLM are frozen, and only the embeddings of these four delimiter tokens are optimized.
+
+This enables the model to learn explicit trust boundaries between instructions and external data without full-model fine-tuning.
+
+### Method
+
+<p align="center">
+  <img src="assets/training.png" width="92%">
+</p>
+
+LTBD consists of three main components:
+
+- **Learnable trust boundaries.**  
+  Four special tokens explicitly delimit trusted instruction and untrusted data regions. Their embeddings are optimized to encode the different semantic and trust roles of the two regions.
+
+- **Prompt-injection-aware defense training.**  
+  We construct a defense dataset \(D'\) containing both clean and prompt-injected samples. The injected samples include `ignore`, `completion`, and `delimiter_spoof` variants.
+
+- **Preference-augmented optimization.**  
+  The self-labeled response generated from the original clean sample is used as the `chosen` response. For the corresponding attacked input, the base model without LTBD generates a `rejected` response. The delimiter embeddings are optimized using response supervision together with a preference objective.
+
+The overall training objective is:
+
+\[
+\mathcal{L}
+=
+\mathcal{L}_{\mathrm{CE}}
++
+\lambda_{\mathrm{pref}}
+\mathcal{L}_{\mathrm{pref}}.
+\]
+
+Here, \(\mathcal{L}_{\mathrm{CE}}\) encourages LTBD to preserve the desired task response, while \(\mathcal{L}_{\mathrm{pref}}\) encourages the model to prefer the desired response over the response produced under prompt injection.
+
+Since only four delimiter embeddings are optimized, LTBD introduces only a small number of trainable parameters while leaving the original LLM unchanged.
+
+---
+
+## ⚙️ Setup
+
+### Environment
+
+Install environment dependencies via [uv](https://docs.astral.sh/uv/):
 
 ```bash
 git clone https://github.com/zhaolumanzp/LTBD.git
 cd LTBD
+
 uv venv ltbd --python 3.13
 source ltbd/bin/activate
+
 uv pip install -r requirements.txt
 ```
 
-* Download the base models used in our experiments from Hugging Face:
+### Models
 
-  * [Llama-3-8B-Instruct](https://huggingface.co/meta-llama/Meta-Llama-3-8B-Instruct)
-  * [Llama-3.1-8B-Instruct](https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct)
-  * [Falcon3-7B-Instruct](https://huggingface.co/tiiuae/Falcon3-7B-Instruct)
-  * [Qwen2.5-7B-Instruct](https://huggingface.co/Qwen/Qwen2.5-7B-Instruct)
+Download the base models used in our experiments from Hugging Face:
 
-For example, the model can be downloaded with `huggingface-cli`:
+- [Llama-3-8B-Instruct](https://huggingface.co/meta-llama/Meta-Llama-3-8B-Instruct)
+- [Llama-3.1-8B-Instruct](https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct)
+- [Falcon3-7B-Instruct](https://huggingface.co/tiiuae/Falcon3-7B-Instruct)
+- [Qwen2.5-7B-Instruct](https://huggingface.co/Qwen/Qwen2.5-7B-Instruct)
+
+For example:
 
 ```bash
 huggingface-cli download \
@@ -29,15 +111,31 @@ huggingface-cli download \
     --local-dir models/Llama-3.1-8B-Instruct
 ```
 
-* Download the [Cleaned Alpaca](https://github.com/gururise/AlpacaDataCleaned) instruction-tuning dataset used for defense training.
+### Training Data
+
+Download the [Cleaned Alpaca](https://github.com/gururise/AlpacaDataCleaned) instruction-tuning dataset:
 
 ```bash
 git clone https://github.com/gururise/AlpacaDataCleaned.git
 ```
 
-## Construct Defense Training Data
+Then set the dataset path in `data_sources.py`, e.g.,
 
-* **Step 1: Generate self-labeled responses.**
+```python
+DEFAULT_ALPACA_PATH = (
+    "/path/to/AlpacaDataCleaned/alpaca_data_cleaned.json"
+)
+```
+
+---
+
+## 🧩 Construct Defense Training Data
+
+The LTBD training data are constructed in three stages.
+
+### Step 1: Generate Self-Labeled Responses
+
+We first use the original base model to generate reference responses for the Cleaned Alpaca samples.
 
 ```bash
 python self_label.py \
@@ -48,9 +146,9 @@ python self_label.py \
     --seed 0
 ```
 
-The original base model is used to generate reference responses on the Cleaned Alpaca dataset.
+The generated responses are subsequently used as the desired outputs during defense training.
 
-* **Step 2: Construct the defense dataset \(D'\).**
+### Step 2: Construct the Defense Dataset \(D'\)
 
 ```bash
 python train_defensive_tokens.py \
@@ -63,9 +161,29 @@ python train_defensive_tokens.py \
     --seed 0
 ```
 
-The constructed dataset consists of clean samples and prompt‑injected variants, namely `ignore`, `completion`, and `delimiter_spoof`. The three injected variants are sampled with weights of 1.5, 2.0, and 1.0, respectively.
+The resulting dataset contains approximately **50% clean samples and 50% prompt-injected samples**.
 
-* **Step 3: Generate rejected responses for preference training.**
+Three injection variants are considered:
+
+```text
+ignore
+completion
+delimiter_spoof
+```
+
+The injected variants are sampled using the configured weights:
+
+```text
+ignore           : 1.5
+completion       : 2.0
+delimiter_spoof  : 1.0
+```
+
+`delimiter_spoof` further simulates attackers inserting fake LTBD boundary tokens into the untrusted data.
+
+### Step 3: Generate Preference Data
+
+For preference-augmented training, we generate rejected responses using the original base model with the corresponding plain prompt, i.e., without LTBD delimiters.
 
 ```bash
 python gen_rejected.py \
@@ -78,11 +196,16 @@ python gen_rejected.py \
     --batch_size 96
 ```
 
-For each sample in \(D'\), the self-labeled response is used as the `chosen` response, while the original base model generates the corresponding `rejected` response using the plain prompt without LTBD delimiters.
+For each sample:
 
-## Train Learnable Trust-Boundary Delimiters
+- `chosen`: the self-labeled desired response;
+- `rejected`: the response generated by the undefended base model.
 
-LTBD introduces four learnable special tokens:
+---
+
+## 🚀 Train LTBD
+
+LTBD optimizes only the embeddings of:
 
 ```text
 <INST_BEGIN>
@@ -91,9 +214,9 @@ LTBD introduces four learnable special tokens:
 <DATA_END>
 ```
 
-During training, all original LLM parameters are frozen and only the embeddings of these four delimiter tokens are optimized.
+All original LLM parameters remain frozen.
 
-* **Step 4: Train LTBD with the defense and preference objectives.**
+Train LTBD with the CE and preference objectives:
 
 ```bash
 python train_defensive_tokens.py \
@@ -112,16 +235,39 @@ python train_defensive_tokens.py \
     --seed 0
 ```
 
-If `self_labeled.jsonl`, `dprime_chosen.jsonl`, and `pref_dprime.jsonl` have already been generated, Steps 1–3 can be skipped.
+The learned delimiter embeddings are exported to:
 
-## Evaluation
+```text
+outputs/<MODEL_NAME>_delimiter_model_pref_lambda0.3/delimiter_embeddings.json
+```
 
-* Reproduce LTBD test results using [Meta_SecAlign](https://github.com/facebookresearch/Meta_SecAlign).
+If
 
-* Specify the trained LTBD model with:
+```text
+self_labeled.jsonl
+dprime_chosen.jsonl
+pref_dprime.jsonl
+```
+
+have already been generated, Steps 1–3 can be skipped and LTBD can be trained directly.
+
+---
+
+## 📊 Evaluation
+
+We use [Meta_SecAlign](https://github.com/facebookresearch/Meta_SecAlign) to reproduce the prompt injection evaluation.
+
+Clone the evaluation repository:
 
 ```bash
--m model_path
+git clone --recurse-submodules https://github.com/facebookresearch/Meta_SecAlign.git
+cd Meta_SecAlign
+```
+
+Specify the trained LTBD model using:
+
+```bash
+-m /path/to/LTBD_model
 ```
 
 For example:
@@ -134,11 +280,16 @@ python test.py \
     -m /path/to/LTBD_model
 ```
 
-* Use `"role": "system"` for the trusted instruction and `"role": "user"` for the untrusted data.
+### Prompt Format
 
-Meta_SecAlign originally uses `"role": "user"` for the trusted instruction and `"role": "input"` for the untrusted data. Modify the corresponding prompt construction in [utils.py](https://github.com/facebookresearch/Meta_SecAlign/blob/main/utils.py#L250).
+For LTBD evaluation, use:
 
-* Enable LTBD when calling `tokenizer.apply_chat_template`:
+- `"role": "system"` for the trusted instruction;
+- `"role": "user"` for the untrusted data.
+
+Meta_SecAlign originally uses `"role": "user"` for the trusted instruction and `"role": "input"` for the untrusted data. Please modify the corresponding prompt construction in [utils.py](https://github.com/facebookresearch/Meta_SecAlign/blob/main/utils.py#L250).
+
+Enable LTBD delimiters when calling `tokenizer.apply_chat_template`:
 
 ```python
 tokenizer.apply_chat_template(
@@ -149,16 +300,69 @@ tokenizer.apply_chat_template(
 )
 ```
 
-With LTBD enabled, the model input follows the structure:
+The resulting input is:
 
 ```text
 [system]
-<INST_BEGIN> trusted instruction <INST_END>
+<INST_BEGIN>
+trusted instruction
+<INST_END>
 
 [user]
-<DATA_BEGIN> untrusted data <DATA_END>
+<DATA_BEGIN>
+untrusted data
+<DATA_END>
 ```
 
-## Acknowledgements
+---
 
-Our implementation and evaluation build upon [DefensiveToken](https://github.com/Sizhe-Chen/DefensiveToken) and [Meta_SecAlign](https://github.com/facebookresearch/Meta_SecAlign). We thank the authors for releasing their code and evaluation framework.
+## 📁 Repository Structure
+
+```text
+LTBD/
+├── assets/
+│   ├── framework.png
+│   └── training.png
+├── data_sources.py
+├── gen_rejected.py
+├── injections.py
+├── prompting.py
+├── requirements.txt
+├── self_label.py
+├── train_defensive_tokens.py
+└── README.md
+```
+
+The main files are:
+
+- `data_sources.py`: load the Cleaned Alpaca training data.
+- `self_label.py`: generate self-labeled reference responses.
+- `injections.py`: construct prompt injection variants.
+- `gen_rejected.py`: generate rejected responses for preference training.
+- `prompting.py`: register LTBD tokens and construct delimiter-aware prompts.
+- `train_defensive_tokens.py`: construct \(D'\) and train the LTBD embeddings.
+
+---
+
+## 📝 Citation
+
+If you find this repository useful, please consider citing our paper:
+
+```bibtex
+@inproceedings{ltbd2027,
+  title     = {Learnable Trust-Boundary Delimiters for Prompt Injection Defense},
+  author    = {Anonymous},
+  booktitle = {ICASSP},
+  year      = {2027}
+}
+```
+
+The citation information will be updated after publication.
+
+---
+
+## 🙏 Acknowledgements
+
+Our implementation and evaluation build upon [DefensiveToken](https://github.com/Sizhe-Chen/DefensiveToken) and [Meta_SecAlign](https://github.com/facebookresearch/Meta_SecAlign).
+
+We thank the authors for releasing their code, datasets, and evaluation frameworks.
