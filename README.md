@@ -26,14 +26,6 @@ During defense training, all parameters of the underlying LLM are frozen, and on
 
 This enables the model to learn explicit trust boundaries between instructions and external data without full-model fine-tuning.
 
-### Method
-
-<p align="center">
-  <img src="assets/training.png" width="92%">
-</p>
-
----
-
 ## ⚙️ Setup
 
 ### Environment
