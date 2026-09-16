@@ -8,7 +8,7 @@
   <a href="#">Paper</a> |
   <a href="https://github.com/zhaolumanzp/LTBD">Code</a>
 </p>
----
+
 ## 🔥 Overview
 
 <p align="center">
@@ -58,6 +58,7 @@ huggingface-cli download \
     meta-llama/Llama-3.1-8B-Instruct \
     --local-dir models/Llama-3.1-8B-Instruct
 ```
+---
 
 ### Training Data
 
