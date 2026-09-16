@@ -12,7 +12,7 @@
 ## 🔥 Overview
 
 <p align="center">
-  <img src="assets/framework.png" width="95%">
+  <img src="LTBD_framework.pdf" width="95%">
 </p>
 
 <p align="center">
