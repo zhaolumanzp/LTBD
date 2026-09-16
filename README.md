@@ -41,7 +41,7 @@ source ltbd/bin/activate
 
 uv pip install -r requirements.txt
 ```
-
+---
 ### Models
 
 Download the base models used in our experiments from Hugging Face:
