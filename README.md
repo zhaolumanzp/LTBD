@@ -11,7 +11,6 @@ git clone https://github.com/zhaolumanzp/LTBD.git
 cd LTBD
 uv venv ltbd --python 3.13
 source ltbd/bin/activate
-
 uv pip install -r requirements.txt
 ```
 
