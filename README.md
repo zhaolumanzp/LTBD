@@ -8,7 +8,7 @@
   <a href="#">Paper</a> |
   <a href="https://github.com/zhaolumanzp/LTBD">Code</a>
 </p>
-
+---
 ## 🔥 Overview
 
 <p align="center">
