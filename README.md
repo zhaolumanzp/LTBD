@@ -50,7 +50,7 @@ python self_label.py \
 
 The original base model is used to generate reference responses on the Cleaned Alpaca dataset.
 
-* **Step 2: Construct the fixed prompt-injected dataset \(D'\).**
+* **Step 2: Construct the defense dataset \(D'\).**
 
 ```bash
 python train_defensive_tokens.py \
@@ -63,7 +63,7 @@ python train_defensive_tokens.py \
     --seed 0
 ```
 
-The constructed dataset contains clean and prompt-injected samples, including `ignore`, `completion`, and `delimiter_spoof` variants.
+The constructed dataset consists of clean samples and prompt‑injected variants, namely `ignore`, `completion`, and `delimiter_spoof`. The three injected variants are sampled with weights of 1.5, 2.0, and 1.0, respectively.
 
 * **Step 3: Generate rejected responses for preference training.**
 
@@ -78,7 +78,7 @@ python gen_rejected.py \
     --batch_size 96
 ```
 
-For each sample in \(D'\), the desired response is used as the `chosen` response, while the original base model generates the corresponding `rejected` response using the plain prompt without LTBD delimiters.
+For each sample in \(D'\), the self-labeled response is used as the `chosen` response, while the original base model generates the corresponding `rejected` response using the plain prompt without LTBD delimiters.
 
 ## Train Learnable Trust-Boundary Delimiters
 
@@ -110,12 +110,6 @@ python train_defensive_tokens.py \
     --batch_size 1 \
     --grad_accum 16 \
     --seed 0
-```
-
-The complete training pipeline can also be executed using the provided shell script after configuring the model and data paths:
-
-```bash
-bash run_train.sh
 ```
 
 If `self_labeled.jsonl`, `dprime_chosen.jsonl`, and `pref_dprime.jsonl` have already been generated, Steps 1–3 can be skipped.
