@@ -194,7 +194,7 @@ If you find this repository useful, please consider citing our paper:
 
 ```bibtex
 @inproceedings{ltbd2027,
-  title     = {A Lightweight Prompt Injection Defense with Learnable Trust-Boundary Delimiters},
+  title     = {LTBD: Learnable Trust-Boundary Delimiters for Prompt Injection Defense},
   author    = {Anonymous},
   booktitle = {},
   year      = {2027}
